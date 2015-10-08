@@ -1,0 +1,12 @@
+.loginError	{
+	font-size: 14px;
+	color: red;
+}
+
+[ng\\:cloak],[ng-cloak],[data-ng-cloak],[x-ng-cloak],.ng-cloak,.x-ng-cloak	{
+	display: none !important;
+}
+
+h3	{
+	color: red;
+}

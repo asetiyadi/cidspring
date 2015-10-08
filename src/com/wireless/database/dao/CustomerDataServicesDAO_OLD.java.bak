@@ -1,0 +1,60 @@
+package com.wireless.database.dao;
+
+import java.sql.CallableStatement;
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.springframework.stereotype.Component;
+
+@Component("customerDataServicesDAO")
+public class CustomerDataServicesDAO_OLD extends BaseDAO
+{
+	public CustomerDataServicesDAO_OLD()
+	{
+		System.out.println("CDS DAO loaded");
+	}
+	
+	public Map<String, String> getCityStateByZip(String zipcode)
+	{
+		String city = "";
+		String state = "";
+		
+		Connection conn = null;
+		CallableStatement st = null;
+		ResultSet rs = null;
+		
+		try 
+		{
+			conn = getSQLConnection(SqlServerDAOFactory.DATABASE_NAME_CUSTOMERDATASERVICES);
+			st = conn.prepareCall("{call usp_get_cityStateInfo(?, ?)}");
+			st.setString(1, zipcode);
+			st.setString(2, "y");
+			st.execute();
+			
+			rs = st.getResultSet();
+			
+			if(rs.next())	
+			{
+				city = rs.getString("city_state_name").trim();
+				state = rs.getString("state_abbrev").trim();
+			}
+		} 
+		catch (SQLException e) 
+		{
+			e.printStackTrace();
+		}
+		finally
+		{
+			closeDBObjects(rs, st, conn);
+		}
+		
+		Map<String, String> result = new HashMap<String, String>();
+		result.put("city", city);
+		result.put("state", state);
+		
+		return result;
+	}
+}

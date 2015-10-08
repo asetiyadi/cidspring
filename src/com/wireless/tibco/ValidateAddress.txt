@@ -1,0 +1,93 @@
+package com.wireless.tibco;
+
+
+import java.util.HashMap;
+
+import org.apache.axis.message.SOAPHeaderElement;
+
+import com.cricket.esp.ESP.Namespaces.Container.Public.ValidateAddressRequest_xsd.ValidateAddressRequestInfo;
+import com.cricket.esp.ESP.Namespaces.Container.Public.ValidateAddressResponse_xsd.ValidateAddressResponseInfo;
+import com.cricket.esp.ESP.Namespaces.Container.Public.ValidateAddressResponse_xsd.ValidateAddressResponseInfoValidateAddressResponse;
+import com.cricket.esp.ESP.Namespaces.v1.wsdl.Cricket_ESP_HTTP_wsdl.CricketESPHTTPServicesLocator;
+import com.cricket.esp.ESP.Namespaces.v1.wsdl.Cricket_ESP_HTTP_wsdl.ValidateAddressStub;
+import com.wireless.bean.AddressBean;
+import com.wireless.tibco.parser.ParseValidateAddress;
+import com.wireless.utilities.ESPHelper;
+
+public class ValidateAddress implements IService 
+{
+	private ESPHelper espHelper = new ESPHelper();
+	private ValidateAddressStub stub;
+	private ValidateAddressRequestInfo request;
+	
+	public ValidateAddress() 
+	{
+		
+	}
+
+	public String getServiceName() 
+	{
+		return "ValidateAddress";
+	}
+
+	public HashMap< String, Object> invokeService() 
+	{
+		HashMap<String, Object> espResponse = new HashMap<String, Object>();
+		AddressBean addressBean = null;
+		
+		/***
+		 * Set the request
+		 */
+		createRequest();
+		
+		try	
+		{
+			/***
+			 * Set the stub
+			 */
+			createStub();
+			
+			/***
+			 * Invoke web service and capture the response
+			 */
+			ValidateAddressResponseInfo response = this.stub.validateAddress(this.request);
+			ValidateAddressResponseInfoValidateAddressResponse espResponseObj = response.getValidateAddressResponse();
+			
+			if(Integer.parseInt(response.getResponse()[0].getCode()) == 0 && espResponseObj != null)	
+			{
+				addressBean = ParseValidateAddress.parseValidateAddress(espResponseObj);
+				espResponse.put("espResponseObject", addressBean);
+			}
+		}
+		catch(Exception e)	
+		{
+			//throw new WebserviceException(e, getServiceName() + "." + "invokeService()");
+			e.printStackTrace();
+		}
+		
+		return espResponse;
+	}
+
+	public void createRequest() 
+	{
+		this.request = new REQUESTOBJECT();
+
+	}
+
+	public void createStub() throws Exception 
+	{
+		try		
+		{
+			SOAPHeaderElement header = espHelper.createMessageHeader();
+			CricketESPHTTPServicesLocator espService = espHelper.setService(getServiceName());
+			
+			this.stub = new STUBOBJECT(espHelper.getEndPoint(getServiceName()), espService);
+			this.stub.setHeader(header);
+		}
+		catch(Exception e)	
+		{
+			e.printStackTrace();
+			throw new Exception("Error invoking createStub() method on " + getServiceName() + ": " + e.getMessage());
+		}
+	}
+}

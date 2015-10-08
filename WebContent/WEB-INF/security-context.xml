@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	
+	<!-- 
+	<bean id="contextSource" class="org.springframework.ldap.core.support.LdapContextSource">
+      	<property name="url" value="ldap://sanbapvmadtest1:389" />
+      	<property name="base" value="DC=ADTEST,DC=DEV1,DC=DOM" />
+      	<property name="userDn" value="cn=djamesmgr" />
+      	<property name="password" value="Sp0tcast" />
+   	</bean>
+   	-->
+   	<!-- 
+   	<bean id="ldapTemplate" class="org.springframework.ldap.core.LdapTemplate">
+      	<constructor-arg ref="contextSource" />
+   	</bean>
+
+   	<bean id="personDao" class="com.example.dao.PersonDaoImpl">
+    	<property name="ldapTemplate" ref="ldapTemplate" />
+   	</bean>
+	 -->
+	
+   	<bean id="ldapContextSource"
+   		class="org.springframework.security.ldap.DefaultSpringSecurityContextSource">
+    	<constructor-arg value="ldap://sanbapvmadtest1:389/DC=ADTEST,DC=DEV1,DC=DOM" />
+    	<property name="userDn" value="djamesmgr@ADTEST.DEV1.DOM"/>
+    	<property name="password" value="Sp0tcast"/>
+	</bean>
+	
+   	<security:authentication-manager>
+		<security:authentication-provider>
+			<security:user-service>
+				<security:user name="csrint" authorities="admin"
+					password="Sp0tcast" />
+				<security:user name="sapi" authorities="admin"
+					password="ompong" />
+			</security:user-service>
+		</security:authentication-provider>
+	 
+		<security:ldap-authentication-provider
+			user-search-base="DC=ADTEST,DC=DEV1,DC=DOM"
+			user-search-filter="sAMAccountName" server-ref="ldapContextSource">
+		</security:ldap-authentication-provider>
+
+   	</security:authentication-manager>
+
+   	<security:http use-expressions="true">
+		<!-- Spring will check the URL pattern in order top to bottom -->
+		<security:intercept-url pattern="/search" access="isAuthenticated()" />
+		<security:intercept-url pattern="/customerInfo" access="isAuthenticated()" />
+		<security:intercept-url pattern="/losSetup/**" access="isAuthenticated()" />
+		<security:intercept-url pattern="/offers" access="isAuthenticated()" />
+		<security:intercept-url pattern="/quote" access="isAuthenticated()" />
+		<security:intercept-url pattern="/payment" access="isAuthenticated()" />
+		<security:intercept-url pattern="/paymentConfirmation" access="isAuthenticated()" />
+		<security:intercept-url pattern="/confirmation"	access="isAuthenticated()" />
+		<security:intercept-url pattern="/account/**" access="isAuthenticated()" />
+		<security:intercept-url pattern="/" access="permitAll" />
+		<security:intercept-url pattern="/activation" access="permitAll" />
+		<security:intercept-url pattern="/static/**" access="permitAll" />
+		<security:intercept-url pattern="/js/**" access="permitAll" />
+		<security:intercept-url pattern="/login" access="permitAll" />
+		<security:intercept-url pattern="/Ajax" access="permitAll" />
+		<security:intercept-url pattern="/json/**" access="permitAll" />
+		<security:intercept-url pattern="/Wireless" access="permitAll" />
+		<security:intercept-url pattern="/**" access="denyAll" />
+
+		<!-- 
+		<security:form-login login-page="/login"
+			authentication-failure-url="/login?error=true"
+			default-target-url="/search" />
+		-->
+		
+		<security:form-login login-page="/login"
+			authentication-failure-url="/login?error=true"
+			default-target-url="/activation" />
+			
+	</security:http>
+
+
+	
+   	
+</beans>

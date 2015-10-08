@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<flow xmlns="http://www.springframework.org/schema/webflow"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/webflow
+        http://www.springframework.org/schema/webflow/spring-webflow-2.0.xsd">
+
+	<!-- <var name="account" class="com.wireless.domain.Account"/> -->
+			
+	<!-- <view-state id="search">
+		<transition on="showCustomerInfo" to="customerInfo"></transition>
+	</view-state> -->
+	<var name="cart" class="com.wireless.domain.Cart"/>
+	
+	
+	<on-start>
+		<evaluate expression="userService.initializeUser()" result="flowScope.user"></evaluate>
+	</on-start>
+	
+	<view-state id="customerInfo" model="cart" view="../account/customerInfo.jsp">
+		<on-entry>
+			<set name="flowScope.loggedInUser" value="currentUser"/>
+		</on-entry>
+		
+		<transition on="toDeviceInfo" to="deviceInfo"></transition>
+		
+		<on-exit>
+			<evaluate expression="activationService.getMarketIdByAddress(cart.account.customer.getAddress())" result="requestScope.marketId"/>
+			<evaluate expression="cart.account.setMarketId(marketId)"/>
+		</on-exit>
+	</view-state>
+	
+	<view-state id="deviceInfo" model="cart">
+		<transition on="validatedevice" to="deviceValidation"></transition>
+	</view-state>
+	
+	<action-state id="deviceValidation">
+		<evaluate expression="deviceService.validateDevice(cart.account.subscribers[0].device.getDeviceId(), cart.account.getMarketId())" result="flowScope.device"/>
+
+		<transition to="losSetup"/>
+	</action-state>
+	
+	<view-state id="losSetup" model="cart">
+		<on-entry>
+			<evaluate expression="cart.account.getSubscriber(0).setDevice(device)"/>
+			<evaluate expression="parcService.getProducts(cart.account, user.getChannelType(), device.getDeviceType())" result="flowScope.products"></evaluate>
+			<evaluate expression="activationService.getRateCenterInfo(cart.account.getMarketId())" result="flowScope.rateCenters"></evaluate>
+		</on-entry>
+		
+		<transition on="loadLosInfoToCart" to="updateCartInfo"/>
+	</view-state>
+	
+	<action-state id="updateCartInfo">
+		<evaluate expression="activationService.loadLosInfoToCart(user, cart)"></evaluate>
+		<transition to="offers">
+			<evaluate expression="parcService.getOffers(cart.account, 0, user.getChannelType())" result="flowScope.offers"/>
+		</transition>
+	</action-state>
+	
+	<view-state id="offers">
+		<transition on="toQuote" to="revieworder"/>
+		<on-exit>
+			<evaluate expression="activationService.setLosOfferingCodes(cart.account.getSubscribers(), 0, getExternalContext())"/>
+			<evaluate expression="activationService.createQuote(cart)"/>
+			<evaluate expression="activationService.setDealerInfo(cart, user)"></evaluate>
+		</on-exit>
+	</view-state>
+	
+	<view-state id="revieworder" model="cart">
+		<transition on="toPayment" to="payment"></transition>	
+	</view-state>
+
+	<view-state id="payment" view="../payment/payment.jsp" model="cart">
+		<transition on="toPaymentConfirmation" to="paymentConfirmation"/>
+		
+		<on-exit>
+			<evaluate expression="paymentService.submitPayment(cart)"/>
+		</on-exit>
+	</view-state>
+	
+	<view-state id="paymentConfirmation" model="cart" view="../payment/paymentConfirmation.jsp">
+		<transition on="toConfirmation" to="confirmation"/>
+		
+		<on-exit>
+			<evaluate expression="accountService.updateQuoteStatus(cart)"/>
+			<evaluate expression="paymentService.completePayment(cart)"/>
+		</on-exit>
+	</view-state>
+	
+	<view-state id="confirmation" view="../account/confirmation.jsp" model="cart">
+	</view-state>
+	
+</flow>
